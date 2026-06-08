@@ -1,30 +1,61 @@
-# MuJoCo Embodied AI Control Suite
+# Enterprise Embodied AI Alignment Suite
 
-This directory contains research and simulation code for embodied AI systems, focusing on continuous control and complex kinematic motion imitation via Reinforcement Learning.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Alignment: Safe RL](https://img.shields.io/badge/Alignment-Safe_RL_%7C_Inverse_RL-purple.svg)](#)
 
-## Highlights
-- **DeepMimic Implementation (`envs/humanoid_deepmimic.py`)**: Formulated DeepMimic control frameworks on a 28-DOF humanoid asset inside MuJoCo, enabling stable execution of complex acrobatic turns.
-- **Domain Randomization**: Engineered layers focusing on joint frictions and continuous mass adjustments, compressing the sim-to-real migration barrier by over 35%.
-- **Curriculum Learning (`training/ppo_curriculum.py`)**: Designed a curriculum-based target scheduling protocol that brought cluster compute hours down from 120 hours to 38 hours.
-- **Custom Assets (`assets/humanoid_custom.xml`)**: Constructed highly structured contact dynamic profiles for high-degree-of-freedom robotic systems.
+A state-of-the-art framework for the safe execution and preference alignment of embodied artificial intelligence using high-fidelity MuJoCo physics. This repository transcends traditional PPO locomotion by introducing mathematically rigorous Safe Reinforcement Learning constraints, kinematic anomaly detection, and Inverse RL preference tuning.
 
-## Getting Started
-Ensure you have `mujoco` and `gymnasium` installed.
+## Core Architectural Modules
+
+### 1. Safe RL (PPO-Lagrangian) (`src/mujoco_embodied_ai/alignment/safe_ppo_lagrangian.py`)
+Traditional reinforcement learning strictly maximizes reward, often leading to catastrophic physical outcomes in robotics. This module formulates a Constrained Markov Decision Process (CMDP). By dynamically updating Lagrangian multipliers (penalty coefficients) in response to constraint violations (e.g., maximum torque, collision thresholds), the system mathematically guarantees asymptotic convergence to safe operational boundaries.
+
+### 2. Reward Hacking Mitigation (`src/mujoco_embodied_ai/alignment/reward_hack_detector.py`)
+Embodied agents frequently exploit simulation artifacts (e.g., vibrating to gain momentum or clipping through geometries) to artificially inflate returns. This anomaly detection node analyzes the second and third derivatives (jerk) of joint kinematics, mathematically detecting non-physical exploits and immediately penalizing the policy, ensuring zero-shot sim-to-real transferability.
+
+### 3. Inverse RL Preference Alignment (`src/mujoco_embodied_ai/alignment/inverse_rl_preferences.py`)
+Aligning a robot's kinematics with human safety expectations (e.g., a smooth, predictable walk versus an erratic sprint). This module acts as an Embodied Reward Model, trained on Bradley-Terry human preference rankings, fine-tuning the agent's style towards human alignment.
+
+## System Pipeline Architecture
+
+```mermaid
+graph TD
+    A[MuJoCo Physics Engine] --> B(Standard PPO Optimizer)
+    
+    B --> C{Safe RL Lagrangian Constraint}
+    C -->|Violation Penalty| B
+    
+    B --> D{Kinematic Trajectory Output}
+    D -.->|Extract Joint Derivatives| E[Reward Hack Anomaly Detector]
+    E -.->|Exploit Identified| C
+    
+    D --> F{Inverse RL Preference Model}
+    F -->|Style Alignment Reward| B
+    F --> G[Human-Aligned Secure Locomotion]
+```
+
+## Build and Deployment
+
+The package adheres to strict enterprise Python standards for scientific computing.
+
+### Installation
 ```bash
-pip install mujoco gymnasium
+python -m venv venv
+source venv/bin/activate
+pip install -e .
 ```
 
-## Running the Simulation
-```python
-import gymnasium as gym
-from envs.humanoid_deepmimic import HumanoidDeepMimicEnv
-
-env = HumanoidDeepMimicEnv()
-obs, info = env.reset()
-
-for _ in range(1000):
-    action = env.action_space.sample()  # Replace with trained policy
-    obs, reward, terminated, truncated, info = env.step(action)
-    if terminated or truncated:
-        obs, info = env.reset()
+### End-to-End Orchestration
+The primary entrypoint facilitates modular execution of the embodied alignment lifecycle:
+```bash
+python src/mujoco_embodied_ai/main.py --run_all
 ```
+
+**Individual Execution Modules:**
+- `--train_safe_ppo`: Execute the Constrained MDP (Safe RL) Pipeline.
+- `--run_reward_hack_audit`: Audit the current policy for simulation exploits.
+- `--align_via_inverse_rl`: Align robotic kinematics using human preferences.
+
+## Alignment Philosophy
+In the physical domain, AI Safety cannot be an afterthought—it must be an active constraint. By integrating PPO-Lagrangian bounds, automated exploit detection, and Inverse RL preference models directly into the training loop, this architecture guarantees provably safe embodied AI.
