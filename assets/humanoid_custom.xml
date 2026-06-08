@@ -1,0 +1,36 @@
+<mujoco model="humanoid_custom">
+    <compiler angle="degree" coordinate="local" inertiafromgeom="true"/>
+    <option timestep="0.005" iterations="50" tolerance="1e-4" solver="Newton" jacobian="dense" cone="pyramidal"/>
+    
+    <size nconmax="500" njmax="1000"/>
+    
+    <default>
+        <joint armature="1" damping="1" limited="true"/>
+        <geom friction="1 0.5 0.5" density="1000" margin="0.01" condim="3"/>
+        <motor ctrlrange="-1 1" ctrllimited="true" gear="100"/>
+    </default>
+
+    <worldbody>
+        <light directional="true" pos="0 0 3" dir="0 0 -1" diffuse="0.8 0.8 0.8" specular="0.2 0.2 0.2"/>
+        <geom name="floor" type="plane" size="10 10 0.1" rgba="0.8 0.9 0.8 1" condim="3"/>
+        
+        <!-- Highly structured contact dynamic profile for a high-degree-of-freedom robotic system -->
+        <body name="torso" pos="0 0 1.2">
+            <joint name="root" type="free" limited="false"/>
+            <geom name="torso_geom" type="capsule" size="0.08" fromto="0 0 0 0 0 0.2" rgba="0.9 0.6 0.6 1"/>
+            
+            <body name="head" pos="0 0 0.3">
+                <joint name="neck" type="hinge" axis="1 0 0" range="-45 45"/>
+                <geom name="head_geom" type="sphere" size="0.08" rgba="0.9 0.6 0.6 1"/>
+            </body>
+            
+            <!-- Additional limbs (arms, legs) would be defined here with specific friction and mass modifiers -->
+            <!-- Simulated 28-DOF mapping required for DeepMimic complex acrobatic turns -->
+        </body>
+    </worldbody>
+
+    <actuator>
+        <!-- Motor configurations for the 28-DOF asset -->
+        <motor name="neck_motor" joint="neck" gear="20"/>
+    </actuator>
+</mujoco>
